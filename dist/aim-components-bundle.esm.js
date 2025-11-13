@@ -22818,6 +22818,8 @@ HighlightJS.registerLanguage("json", json);
 HighlightJS.registerLanguage("typescript", typescript);
 HighlightJS.registerLanguage("html", xml);
 HighlightJS.registerLanguage("xml", xml);
+const AsyncFunction = (async () => {
+}).constructor;
 const $normalizedName = Symbol("normalizedName");
 const AssetsBase = "/";
 const IconFolder = AssetsBase + "icons/";
@@ -23002,6 +23004,9 @@ function ValueIsIndexPath(Value) {
 }
 function ValueIsRef(Value) {
   return javascriptInterfaceLibrary_umdExports.ValueIsPlainObject(Value) && "current" in Value;
+}
+function ValueIsPromise(Value) {
+  return (javascriptInterfaceLibrary_umdExports.ValueIsObject(Value) || javascriptInterfaceLibrary_umdExports.ValueIsFunction(Value)) && javascriptInterfaceLibrary_umdExports.ValueIsFunction(Value.then);
 }
 function parsedPropSet(PropSet, ...ParserList) {
   javascriptInterfaceLibrary_umdExports.expectPlainObject("PropSet", PropSet);
@@ -23950,8 +23955,26 @@ function AIM_ErrorIndicator(PropSet) {
   return safelyRendered(() => {
     let [ErrorToShow] = parsedPropSet(
       PropSet,
-      optionalValue("error", (Value) => Value instanceof Error)
+      optionalValue("error", (Value) => Value instanceof Error || javascriptInterfaceLibrary_umdExports.ValueIsText(Value))
     );
+    switch (true) {
+      case ErrorToShow instanceof Error:
+        break;
+      case javascriptInterfaceLibrary_umdExports.ValueIsText(ErrorToShow):
+        if (/^[^\n]+\n\n[^\n]+/.test(ErrorToShow)) {
+          const Title2 = ErrorToShow.replace(/\n\n.*$/, "");
+          const Message = ErrorToShow.replace(/^[^\n]+\n\n/, "");
+          ErrorToShow = new Error(Message);
+          ErrorToShow.name = Title2;
+        } else {
+          ErrorToShow = new Error(ErrorToShow);
+          ErrorToShow.name = "Unexpected Failure";
+        }
+        break;
+      default:
+        ErrorToShow = new Error("" + ErrorToShow);
+        ErrorToShow.name = "Unexpected Failure";
+    }
     const onClick = () => {
       console.warn(ErrorToShow);
       window.alert(ErrorMessageFor(ErrorToShow));
@@ -29795,6 +29818,90 @@ function NLV_ListItemView(PropSet) {
       ${Contents}
     </>`;
 }
+class AIM_AppletElement extends HTMLElement {
+  constructor() {
+    super();
+    let Script = unescapedHTMLAttribute(this.getAttribute("src") ?? "");
+    if (Script.trim() === "") {
+      this._Renderer = AppletFailingWith("");
+      return;
+    }
+    try {
+      this._Renderer = new AsyncFunction("PropSet", Script);
+    } catch (Signal) {
+      this._Renderer = AppletFailingWith(
+        'Compilation Error\n\nCompiling Applet "src" failed with ' + (Signal.stack ?? Signal.message ?? Signal)
+      );
+      return;
+    }
+  }
+  connectedCallback() {
+    G$3(m$1`<${AppletView} renderer=${this._Renderer}/>`, this);
+  }
+  disconnectedCallback() {
+    G$3(null, this);
+  }
+}
+function AppletFailingWith(Message) {
+  if (Message.trim() === "") {
+    return function(PropSet) {
+      return "";
+    };
+  } else {
+    return function(PropSet) {
+      return m$1`<${AIM_ErrorIndicator} error=${Message}/>`;
+    };
+  }
+}
+function AppletView(PropSet) {
+  const [asyncRendering, setAsyncRendering] = y2();
+  const asyncRenderingRef = F();
+  const [Error2] = O$1();
+  if (Error2 == null) {
+    if (asyncRenderingRef.current != asyncRendering) {
+      asyncRenderingRef.current = asyncRendering;
+      return asyncRendering;
+    }
+    let Rendering = PropSet.renderer({});
+    if (ValueIsPromise(Rendering)) {
+      Rendering.then((Rendering2) => setAsyncRendering(Rendering2)).catch(
+        (Error3) => setAsyncRendering(
+          m$1`<${AIM_ErrorIndicator} error=${Error3}/>`
+        )
+      );
+      return;
+    } else {
+      return Rendering;
+    }
+  } else {
+    const Message = "Applet Failure\n\nAIM Applet failed with " + (Error2.stack ?? Error2.message ?? Error2);
+    return m$1`<${AIM_ErrorIndicator} error=${Message}/>`;
+  }
+}
+function unescapedHTMLAttribute(OriginalValue) {
+  return OriginalValue.replace(
+    /&(amp|lt|gt|quot|apos|#92|#x[0-9a-fA-F]{4});/g,
+    function(Match) {
+      switch (Match) {
+        case "&amp;":
+          return "&";
+        case "&lt;":
+          return "<";
+        case "&gt;":
+          return ">";
+        case "&quot;":
+          return '"';
+        case "&apos;":
+          return "'";
+        case "&#92;":
+          return "\\";
+        default:
+          let Code = parseInt(Match.slice(3), 16);
+          return String.fromCharCode(Code);
+      }
+    }
+  );
+}
 function consumeEvent(Event, completely = false) {
   Event.stopPropagation();
   if (completely == true) {
@@ -29829,6 +29936,15 @@ function deepCopyOf(Value) {
   }
   return Copy;
 }
+window.addEventListener("unhandledrejection", (Event) => {
+  console.error(
+    "caught unhandled error in Promise:",
+    Event.reason?.stack ?? Event.reason?.message,
+    Event
+  );
+  Event.preventDefault();
+});
+customElements.define("aim-applet", AIM_AppletElement);
 export {
   AIM_DatePattern,
   AIM_DateRegExp,
@@ -29854,6 +29970,7 @@ export {
   AIM_supportedMarkdownFormats,
   AIM_supportedTextFormats,
   AccordionFold,
+  AsyncFunction,
   Button,
   Checkbox,
   ColorInput,

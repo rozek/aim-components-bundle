@@ -1,0 +1,41 @@
+{
+  "name": "aim-components-bundle",
+  "description": "aim-components and dependencies bundled into a single module for easier import",
+  "version": "0.0.1",
+  "keywords": [],
+  "author": "Andreas Rozek",
+  "homepage": "https://github.com/rozek/aim-components-bundle#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rozek/aim-components-bundle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rozek/aim-components-bundle/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/aim-components-bundle.js",
+  "module": "./dist/aim-components-bundle.js",
+  "types": "./dist/aim-components-bundle.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "htm": "github:rozek/htm",
+    "preact": "github:rozek/preact",
+    "aim-components": "github:rozek/aim-components",
+    "@formkit/auto-animate": "^0.9.0",
+    "highlight.js": "^11.11.1",
+    "javascript-interface-library": "github:rozek/javascript-interface-library",
+    "marked": "^16.4.1",
+    "marked-highlight": "^2.2.2",
+    "marked-katex-extension": "^5.1.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

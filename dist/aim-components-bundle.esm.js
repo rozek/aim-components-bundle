@@ -23283,17 +23283,17 @@ function useConfiguration(initialConfiguration = {}) {
   if (!javascriptInterfaceLibrary_umdExports.ValueIsFunction(initialConfiguration) && !javascriptInterfaceLibrary_umdExports.ValueIsPlainObject(initialConfiguration)) throwError(
     "InvalidArgument:the given initial configuration is neither a plain object nor a function"
   );
-  if (javascriptInterfaceLibrary_umdExports.ValueIsFunction(initialConfiguration)) {
-    initialConfiguration = executedCallback(
-      'component callback "initialConfiguration"',
-      initialConfiguration
-    );
-    if (!javascriptInterfaceLibrary_umdExports.ValueIsPlainObject(initialConfiguration)) throwError(
-      "InvalidArgument:the result of the initial configuration callback is not a plain object"
-    );
-  }
   const ConfigurationRef = F();
   if (ConfigurationRef.current == null) {
+    if (javascriptInterfaceLibrary_umdExports.ValueIsFunction(initialConfiguration)) {
+      initialConfiguration = executedCallback(
+        'component callback "initialConfiguration"',
+        initialConfiguration
+      );
+      if (!javascriptInterfaceLibrary_umdExports.ValueIsPlainObject(initialConfiguration)) throwError(
+        "InvalidArgument:the result of the initial configuration callback is not a plain object"
+      );
+    }
     ConfigurationRef.current = deepCopyOf(initialConfiguration);
   }
   const configure = b((ChangeSet) => {
